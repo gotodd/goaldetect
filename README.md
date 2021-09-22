@@ -1,1 +1,1 @@
-# goaldetect
+RFC goal detection
