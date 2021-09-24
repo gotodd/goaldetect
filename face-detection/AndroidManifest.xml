@@ -1,21 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="org.opencv.samples.facedetect"
->
+          package="com.team254.cheezdroid" >
+    <uses-feature android:name="android.hardware.camera2" android:required="true"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:label="@string/app_name"
         android:icon="@drawable/icon">
-
-        <activity android:name="FdActivity"
-                  android:label="@string/app_name"
-                  android:screenOrientation="landscape"
-                  android:configChanges="keyboardHidden|orientation">
-            <intent-filter>
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen" >
+        <activity
+            android:name=".VisionTrackerActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation">
+      <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <receiver
+            android:name=".ChezyDeviceAdminReceiver"
+            android:description="@string/device_admin_description"
+            android:label="@string/device_admin_label"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin_policies" />
+
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+
     </application>
 
     <supports-screens android:resizeable="true"
@@ -23,8 +42,6 @@
                       android:normalScreens="true"
                       android:largeScreens="true"
                       android:anyDensity="true" />
-
-    <uses-permission android:name="android.permission.CAMERA"/>
 
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>

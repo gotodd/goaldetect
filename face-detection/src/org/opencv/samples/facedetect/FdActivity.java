@@ -30,6 +30,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import com.team254.cheezdroid.R;
 
 public class FdActivity extends CameraActivity implements CvCameraViewListener2 {
 
