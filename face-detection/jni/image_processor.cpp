@@ -40,24 +40,24 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
 
   // read
   t = getTimeMs();
-#if 1
   glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, input.data);
   LOGD("glReadPixels() costs %d ms", getTimeInterval(t));
-#endif
 
-  // modify
+  // change format to HSV
   t = getTimeMs();
   static cv::Mat hsv;
   cv::cvtColor(input, hsv, CV_RGBA2RGB);
   cv::cvtColor(hsv, hsv, CV_RGB2HSV);
   LOGD("cvtColor() costs %d ms", getTimeInterval(t));
 
+  // HSV filter
   t = getTimeMs();
   static cv::Mat thresh;
   cv::inRange(hsv, cv::Scalar(h_min, s_min, v_min),
               cv::Scalar(h_max, s_max, v_max), thresh);
   LOGD("inRange() costs %d ms", getTimeInterval(t));
 
+  // Contour
   t = getTimeMs();
   static cv::Mat contour_input;
   contour_input = thresh.clone();
@@ -152,7 +152,6 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
     }
   }
 
-
   // write back
   t = getTimeMs();
   static cv::Mat vis;
@@ -176,14 +175,12 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   }
   LOGD("Creating vis costs %d ms", getTimeInterval(t));
 
-#if 1
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texOut);
   t = getTimeMs();
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE,
                   vis.data);
   LOGD("glTexSubImage2D() costs %d ms", getTimeInterval(t));
-#endif
   return targets;
 }
 
