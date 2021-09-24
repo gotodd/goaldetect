@@ -28,12 +28,26 @@ struct TargetInfo {
   std::vector<cv::Point> points;
 };
 
+static int framecount=0;
 std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
                                     int h_min, int h_max, int s_min, int s_max,
                                     int v_min, int v_max) {
-  LOGD("Image is %d x %d", w, h);
-  LOGD("H %d-%d S %d-%d V %d-%d", h_min, h_max, s_min, s_max, v_min, v_max);
   int64_t t;
+
+  bool doprint=false;
+  framecount++;
+  if (framecount>30){
+    framecount=0;
+    doprint=true;
+  }
+
+  //h_min=s_min=v_min=0;
+  //h_max=s_max=v_max=255;
+
+  if (doprint){
+    LOGD("Image is %d x %d", w, h);
+    LOGD("H %d-%d S %d-%d V %d-%d", h_min, h_max, s_min, s_max, v_min, v_max);
+  }
 
   static cv::Mat input;
   input.create(h, w, CV_8UC4);
@@ -41,24 +55,24 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   // read
   t = getTimeMs();
   glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, input.data);
-  LOGD("glReadPixels() costs %d ms", getTimeInterval(t));
+  //LOGD("glReadPixels() costs %d ms", getTimeInterval(t));
 
   // change format to HSV
-  t = getTimeMs();
+  //t = getTimeMs();
   static cv::Mat hsv;
   cv::cvtColor(input, hsv, CV_RGBA2RGB);
   cv::cvtColor(hsv, hsv, CV_RGB2HSV);
-  LOGD("cvtColor() costs %d ms", getTimeInterval(t));
+  //LOGD("cvtColor() costs %d ms", getTimeInterval(t));
 
   // HSV filter
-  t = getTimeMs();
+  //t = getTimeMs();
   static cv::Mat thresh;
   cv::inRange(hsv, cv::Scalar(h_min, s_min, v_min),
               cv::Scalar(h_max, s_max, v_max), thresh);
-  LOGD("inRange() costs %d ms", getTimeInterval(t));
+  //LOGD("inRange() costs %d ms", getTimeInterval(t));
 
   // Contour
-  t = getTimeMs();
+  //t = getTimeMs();
   static cv::Mat contour_input;
   contour_input = thresh.clone();
   std::vector<std::vector<cv::Point>> contours;
@@ -69,12 +83,23 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   std::vector<TargetInfo> rejected_targets;
   cv::findContours(contour_input, contours, cv::RETR_EXTERNAL,
                    cv::CHAIN_APPROX_TC89_KCOS);
+  if (doprint){
+    LOGD("contour counting started\n");
+  }
+  int ct_count=0;
   for (auto &contour : contours) {
+    ct_count++;
+    LOGD("contour %d\n",ct_count);
     convex_contour.clear();
     cv::convexHull(contour, convex_contour, false);
     poly.clear();
 
-    if (cv::isContourConvex(convex_contour)) {
+    if (!cv::isContourConvex(convex_contour)) {
+      LOGD("contour not convext\n");
+      continue;
+    }
+
+    {
       TargetInfo target;
       cv::Rect bounding_rect = cv::boundingRect(convex_contour);
       target.centroid_x = bounding_rect.x + (bounding_rect.width / 2);
@@ -87,9 +112,9 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       // Filter based on size
       // Keep in mind width/height are in imager terms...
       const double kMinTargetWidth = 20;
-      const double kMaxTargetWidth = 300;
-      const double kMinTargetHeight = 6;
-      const double kMaxTargetHeight = 60;
+      const double kMaxTargetWidth = 200;
+      const double kMinTargetHeight = 20;
+      const double kMaxTargetHeight = 200;
       if (target.width < kMinTargetWidth || target.width > kMaxTargetWidth ||
           target.height < kMinTargetHeight ||
           target.height > kMaxTargetHeight) {
@@ -100,8 +125,8 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
 
       // Filter based on shape
-      const double kMaxWideness = 7.0;
-      const double kMinWideness = 1.5;
+      const double kMaxWideness = 1.5;
+      const double kMinWideness = 0.6;
       double wideness = target.width / target.height;
       if (wideness < kMinWideness || wideness > kMaxWideness) {
         LOGD("Rejecting target due to shape : %.2lf", wideness);
@@ -110,8 +135,8 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
 
       //Filter based on fullness
-      const double kMinFullness = .45;
-      const double kMaxFullness = .95;
+      const double kMinFullness = .70;
+      const double kMaxFullness = .99;
       double original_contour_area = cv::contourArea(convex_contour);
       double area = target.width * target.height * 1.0;
       double fullness = original_contour_area / area;
@@ -127,8 +152,9 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       accepted_targets.push_back(std::move(target));
     }
   }
-  LOGD("Contour analysis costs %d ms", getTimeInterval(t));
+  //LOGD("Contour analysis costs %d ms", getTimeInterval(t));
 
+#if 0
 
   const double kMaxOffset = 10;
   bool found = false;
@@ -151,9 +177,10 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
     }
   }
+#endif
 
   // write back
-  t = getTimeMs();
+  //t = getTimeMs();
   static cv::Mat vis;
   if (mode == DISP_MODE_RAW) {
     vis = input;
@@ -161,8 +188,8 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
     cv::cvtColor(thresh, vis, CV_GRAY2RGBA);
   } else {
     vis = input;
-    // Render the targets
-    for (auto &target : targets) {
+    // Render the accepted_targets
+    for (auto &target : accepted_targets) {
       cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);
       cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 4,
                  cv::Scalar(255, 50, 255), 3);
@@ -173,14 +200,14 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       cv::polylines(vis, target.points, true, cv::Scalar(255, 0, 0), 3);
     }
   }
-  LOGD("Creating vis costs %d ms", getTimeInterval(t));
+  //LOGD("Creating vis costs %d ms", getTimeInterval(t));
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texOut);
   t = getTimeMs();
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE,
                   vis.data);
-  LOGD("glTexSubImage2D() costs %d ms", getTimeInterval(t));
+  //LOGD("glTexSubImage2D() costs %d ms", getTimeInterval(t));
   return targets;
 }
 

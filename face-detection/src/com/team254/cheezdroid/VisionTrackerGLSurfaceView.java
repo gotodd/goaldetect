@@ -105,12 +105,12 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
 
     @Override
     public boolean onCameraTexture(int texIn, int texOut, int width, int height, long image_timestamp) {
-        Log.d(LOGTAG, "onCameraTexture - Timestamp " + image_timestamp + ", current time " + System.nanoTime() / 1E9);
+        //Log.d(LOGTAG, "onCameraTexture - Timestamp " + image_timestamp + ", current time " + System.nanoTime() / 1E9);
         // FPS
         frameCounter++;
         if (frameCounter >= 30) {
             final int fps = (int) (frameCounter * 1e9 / (System.nanoTime() - lastNanoTime));
-            Log.i(LOGTAG, "drawFrame() FPS: " + fps);
+            //Log.i(LOGTAG, "drawFrame() FPS: " + fps);
             if (mFpsText != null) {
                 Runnable fpsUpdater = new Runnable() {
                     public void run() {
@@ -129,11 +129,16 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
         Pair<Integer, Integer> hRange = m_prefs != null ? m_prefs.getThresholdHRange() : blankPair();
         Pair<Integer, Integer> sRange = m_prefs != null ? m_prefs.getThresholdSRange() : blankPair();
         Pair<Integer, Integer> vRange = m_prefs != null ? m_prefs.getThresholdVRange() : blankPair();
-        NativePart.processFrame(texIn, texOut, width, height, procMode, hRange.first, hRange.second,
-                sRange.first, sRange.second, vRange.first, vRange.second, targetsInfo);
+        if (hRange.first <= hRange.second){
+          NativePart.processFrame(texIn, texOut, width, height, procMode, hRange.first, hRange.second,
+                  sRange.first, sRange.second, vRange.first, vRange.second, targetsInfo);
+        }else{
+          NativePart.processFrame(texIn, texOut, width, height, procMode,  hRange.second, hRange.first,
+                  sRange.second, sRange.first, vRange.second, vRange.first, targetsInfo);
+        }
 
         VisionUpdate visionUpdate = new VisionUpdate(image_timestamp);
-        Log.i(LOGTAG, "Num targets = " + targetsInfo.numTargets);
+        //Log.i(LOGTAG, "Num targets = " + targetsInfo.numTargets);
         int numTargets = Math.min(targetsInfo.targets.length, targetsInfo.numTargets);
         for (int i = 0; i < numTargets; ++i) {
             NativePart.TargetsInfo.Target target = targetsInfo.targets[i];
