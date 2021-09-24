@@ -12,4 +12,4 @@ file(GLOB hdrs *.hpp *.h)
 
 include_directories("${CMAKE_CURRENT_LIST_DIR}")
 add_library(${target} SHARED ${srcs} ${hdrs})
-target_link_libraries(${target} ${ANDROID_OPENCV_COMPONENTS})
+target_link_libraries(${target} ${ANDROID_OPENCV_COMPONENTS} GLESv2 EGL)

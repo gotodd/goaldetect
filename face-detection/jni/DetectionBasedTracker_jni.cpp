@@ -7,8 +7,10 @@
 
 #include <android/log.h>
 
-#define LOG_TAG "FaceDetection/DetectionBasedTracker"
-#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
+//#define LOG_TAG "FaceDetection/DetectionBasedTracker"
+//#define LOGD(...) ((void)__android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__))
+
+#include "common.hpp"
 
 using namespace std;
 using namespace cv;

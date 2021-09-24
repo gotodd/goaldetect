@@ -1,4 +1,6 @@
 # Built application files
+tags
+*.swp
 *.apk
 *.aar
 *.ap_
