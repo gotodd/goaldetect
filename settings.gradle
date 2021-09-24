@@ -1,5 +1,5 @@
 
-rootProject.name = 'opencv_samples'
+rootProject.name = 'tiebing_samples'
 
 def opencvsdk='../'
 //def opencvsdk='/<path to OpenCV-android-sdk>'
