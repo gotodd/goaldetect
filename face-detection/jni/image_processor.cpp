@@ -208,7 +208,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE,
                   vis.data);
   //LOGD("glTexSubImage2D() costs %d ms", getTimeInterval(t));
-  return targets;
+  return accepted_targets;
 }
 
 static bool sFieldsRegistered = false;

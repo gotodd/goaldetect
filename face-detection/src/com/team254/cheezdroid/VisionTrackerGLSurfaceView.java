@@ -125,6 +125,8 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
             frameCounter = 0;
             lastNanoTime = System.nanoTime();
         }
+
+        VisionUpdate visionUpdate = new VisionUpdate(image_timestamp);
         NativePart.TargetsInfo targetsInfo = new NativePart.TargetsInfo();
         Pair<Integer, Integer> hRange = m_prefs != null ? m_prefs.getThresholdHRange() : blankPair();
         Pair<Integer, Integer> sRange = m_prefs != null ? m_prefs.getThresholdSRange() : blankPair();
@@ -137,7 +139,6 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
                   sRange.second, sRange.first, vRange.second, vRange.first, targetsInfo);
         }
 
-        VisionUpdate visionUpdate = new VisionUpdate(image_timestamp);
         //Log.i(LOGTAG, "Num targets = " + targetsInfo.numTargets);
         int numTargets = Math.min(targetsInfo.targets.length, targetsInfo.numTargets);
         for (int i = 0; i < numTargets; ++i) {
@@ -147,12 +148,12 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
             double y = -(target.centroidX - kCenterCol) / getFocalLengthPixels();
             double z = (target.centroidY - kCenterRow) / getFocalLengthPixels();
             Log.i(LOGTAG, "Target at: " + y + ", " + z);
-            visionUpdate.addCameraTargetInfo(
-                    new CameraTargetInfo(y, z));
+            visionUpdate.addCameraTargetInfo(new CameraTargetInfo(y, z));
         }
 
+        TargetUpdateMessage update = new TargetUpdateMessage(visionUpdate, System.nanoTime());
+        Log.i(LOGTAG, "JSON: " + update.toJson()+"\n");
         if (mRobotConnection != null) {
-            TargetUpdateMessage update = new TargetUpdateMessage(visionUpdate, System.nanoTime());
             mRobotConnection.send(update);
         }
         return true;
