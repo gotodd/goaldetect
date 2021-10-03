@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.PowerManager;
+import android.util.Log;
 
 import com.team254.cheezdroid.comm.RobotConnection;
 
@@ -36,6 +37,7 @@ public class AppContext extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.i("appContext", "creating context 222");
         instance = this;
         rc = new RobotConnection(getDefaultContext());
         rc.start();

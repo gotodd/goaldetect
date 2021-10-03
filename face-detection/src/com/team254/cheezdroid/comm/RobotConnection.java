@@ -12,6 +12,7 @@ import com.team254.cheezdroid.comm.messages.VisionMessage;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,7 +22,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class RobotConnection {
-    public static final int K_ROBOT_PORT = 8254;
+    public static final int K_ROBOT_PORT = 3000;
     public static final String K_ROBOT_PROXY_HOST = "localhost";
     public static final int K_CONNECTOR_SLEEP_MS = 100;
     public static final int K_THRESHOLD_HEARTBEAT = 800;
@@ -151,6 +152,42 @@ public class RobotConnection {
         }
     }
 
+    private static String getTetherHostAddress()  {
+        String result="127.0.0.1";
+        try {
+
+            //String tmpdir=context.getCacheDir().getAbsolutePath();
+            /*
+            Log.w("RobotConnection","Tether IP starting---------------------------\n");
+            String str="192.168.86.208 dev wlan0 lladdr 8c:e2:da:bc:78:32 STALE";
+            FileOutputStream outputStream = new FileOutputStream(tmpdir+"/ip.txt");
+            byte[] strToBytes = str.getBytes();
+            outputStream.write(strToBytes);
+            outputStream.close();
+             */
+            //Process process = Runtime.getRuntime().exec("cat " + tmpdir+"/ip.txt");
+            Process process = Runtime.getRuntime().exec("ip neigh");
+            BufferedReader reader = new BufferedReader( new InputStreamReader(process.getInputStream()));
+            String it;
+            while ((it= reader.readLine()) != null) {
+                Log.w("RobotConnection","Tether IP line is "+it);
+                if (!it.contains("FAILED")) {
+                    String[] split = it.split("\\s+");
+                    if (split.length > 4 && split[0].matches("([0-9]{1,3}\\.){3}[0-9]{1,3}")) {
+                        result=split[0];
+                        Log.w("RobotConnection","Tether IP address is "+result);
+                        break;
+                    }
+                }
+            }
+            reader.close();
+            process.destroy();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
     public RobotConnection(Context context, String host, int port) {
         m_context = context;
         m_host = host;
@@ -158,13 +195,17 @@ public class RobotConnection {
     }
 
     public RobotConnection(Context context) {
-        this(context, K_ROBOT_PROXY_HOST, K_ROBOT_PORT);
+
+        //this(context, K_ROBOT_PROXY_HOST, K_ROBOT_PORT);
+        this(context, getTetherHostAddress(), K_ROBOT_PORT);
+        Log.w("RobotConnection","Tether IP starting 111---------------------------\n");
     }
 
     synchronized private void tryConnect() {
         if (m_socket == null) {
             try {
-                m_socket = new Socket(m_host, m_port);
+                //m_socket = new Socket(m_host, m_port);
+                m_socket = new Socket(getTetherHostAddress(), K_ROBOT_PORT);
                 m_socket.setSoTimeout(100);
             } catch (IOException e) {
                 Log.w("RobotConnector", "Could not connect");
