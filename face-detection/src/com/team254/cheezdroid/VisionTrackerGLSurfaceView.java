@@ -152,9 +152,11 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
         }
 
         TargetUpdateMessage update = new TargetUpdateMessage(visionUpdate, System.nanoTime());
-        //Log.i(LOGTAG, "JSON: " + update.toJson()+"\n");
+        Log.i(LOGTAG, "JSON: " + update.toJson()+"\n");
         if (mRobotConnection != null) {
             mRobotConnection.send(update);
+        }else {
+            Log.i(LOGTAG, "-- robot not connected --\n");
         }
         return true;
     }

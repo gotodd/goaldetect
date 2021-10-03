@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ public class RobotConnection {
     private boolean m_running = true;
     private boolean m_connected = false;
     volatile private Socket m_socket;
-    private Thread m_connect_thread, m_read_thread, m_write_thread;
+    private Thread m_connect_thread, m_read_thread, m_write_thread, m_server_thread;
 
     private long m_last_heartbeat_sent_at = System.currentTimeMillis();
     private long m_last_heartbeat_rcvd_at = 0;
@@ -57,6 +58,32 @@ public class RobotConnection {
                 }
                 sendToWire(nextToSend);
             }
+        }
+    }
+
+    protected class ServerThread implements Runnable {
+        @Override
+        public void run() {
+            while (m_running) {
+                int port=K_ROBOT_PORT;
+                try (ServerSocket serverSocket = new ServerSocket(port)) {
+                    Log.w("RobotConnection","Server is listening on port " + port);
+                    while (true) {
+                        Socket socket = serverSocket.accept();
+                        Log.w("RobotConnection","New client connected");
+                        InputStream input = socket.getInputStream();
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+                        String text;
+                        do {
+                            text = reader.readLine();
+                            Log.w("Server:" , text);
+                        } while (!text.equals(""));
+                        socket.close();
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+           }
         }
     }
 
@@ -232,6 +259,14 @@ public class RobotConnection {
             }
         }
 
+        if (m_server_thread != null && m_server_thread.isAlive()) {
+            try {
+                m_server_thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         if (m_read_thread != null && m_read_thread.isAlive()) {
             try {
                 m_read_thread.join();
@@ -248,6 +283,13 @@ public class RobotConnection {
             m_write_thread = new Thread(new WriteThread());
             m_write_thread.start();
         }
+
+        /*
+        if (m_server_thread == null || !m_server_thread.isAlive()) {
+            m_server_thread = new Thread(new ServerThread());
+            m_server_thread.start();
+        }
+         */
 
         if (m_read_thread == null || !m_read_thread.isAlive()) {
             m_read_thread = new Thread(new ReadThread());
@@ -272,6 +314,7 @@ public class RobotConnection {
 
     private synchronized boolean sendToWire(VisionMessage message) {
         String toSend = message.toJson() + "\n";
+        Log.w("RobotConnection", "toSend: "+toSend);
         if (m_socket != null && m_socket.isConnected()) {
             try {
                 OutputStream os = m_socket.getOutputStream();
