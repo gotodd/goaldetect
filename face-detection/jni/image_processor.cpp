@@ -135,10 +135,10 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
 
       //Filter based on fullness
-      const double kMinFullness = .90;
-      const double kMaxFullness = 1;
-      const double kMinFullness2 = .30;
-      const double kMaxFullness2 = .60;
+      const double kMinFullness = .70;
+      const double kMaxFullness = .98;
+      const double kMinFullness2 = .40;
+      const double kMaxFullness2 = .70;
       double original_contour_area = cv::contourArea(convex_contour);
       double area = target.width * target.height * 1.0;
       double fullness = original_contour_area / area;
