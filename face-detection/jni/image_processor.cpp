@@ -111,10 +111,10 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
 
       // Filter based on size
       // Keep in mind width/height are in imager terms...
-      const double kMinTargetWidth = 20;
-      const double kMaxTargetWidth = 200;
-      const double kMinTargetHeight = 20;
-      const double kMaxTargetHeight = 200;
+      const double kMinTargetWidth = 10;
+      const double kMaxTargetWidth = 300;
+      const double kMinTargetHeight = 10;
+      const double kMaxTargetHeight = 300;
       if (target.width < kMinTargetWidth || target.width > kMaxTargetWidth ||
           target.height < kMinTargetHeight ||
           target.height > kMaxTargetHeight) {
@@ -125,7 +125,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
 
       // Filter based on shape
-      const double kMaxWideness = 1.5;
+      const double kMaxWideness = 4;
       const double kMinWideness = 0.6;
       double wideness = target.width / target.height;
       if (wideness < kMinWideness || wideness > kMaxWideness) {
@@ -135,12 +135,14 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
 
       //Filter based on fullness
-      const double kMinFullness = .70;
-      const double kMaxFullness = .99;
+      const double kMinFullness = .90;
+      const double kMaxFullness = 1;
+      const double kMinFullness2 = .30;
+      const double kMaxFullness2 = .60;
       double original_contour_area = cv::contourArea(convex_contour);
       double area = target.width * target.height * 1.0;
       double fullness = original_contour_area / area;
-      if (fullness < kMinFullness || fullness > kMaxFullness) {
+      if (!(fullness >= kMinFullness && fullness <= kMaxFullness) && !(fullness >= kMinFullness2 && fullness <= kMaxFullness2)) {
         LOGD("Rejecting target due to fullness : %.2lf", fullness);
         rejected_targets.push_back(std::move(target));
         continue;
