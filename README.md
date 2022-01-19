@@ -1,4 +1,4 @@
-RFC goal detection
+FRC goal detection
 
 sample JSON mesage sent over wire to Roborio:
 ```
